@@ -1,0 +1,75 @@
+#############################################
+#############      gitlab       #############
+#############################################
+
+# 容器构建
+docker run --detach --hostname 192.168.0.30 -p 8443:443 -p 80:80 -p 8022:22 --name gitlab --restart always  -v /srv/gitlab/config:/etc/gitlab  -v /srv/gitlab/logs:/var/log/gitlab -v /srv/gitlab/data:/var/opt/gitlab   gitlab/gitlab-ce:11.11.3-ce.0
+
+# 重构重启
+gitlab-ctl reconfigure   (会生成新的gitlab.yml)
+gitlab-ctl restart
+
+# 手动备份  
+gitlab-rake gitlab:backup:create
+
+# 备份回复
+gitlab-ctl stop unicorn  &&  gitlab-ctl stop sidekiq
+gitlab-rake gitlab:backup:restore BACKUP=/var/opt/gitlab/backups/1557136073_2019_05_06_11.10.4
+gitlab-ctl start
+
+# 远程备份
+#docker run -d --name sshpass --restart always -v /srv/gitlab/data/backups:/opt/backups ictu/sshpass:latest
+#docker run -v /srv/gitlab/data/backups:/opt/backups --rm -it sshpass -p gitbackup ssh -o StrictHostKeyChecking=no gitbackup@192.168.0.150:/home/gitbackup  scp /opt/backups/gitlab_backup.sh
+sshpass -o StrictHostKeyChecking=no -p gitbackup scp gitlab_backup.sh gitbackup@192.168.0.150:/home/gitbackup 
+sshpass -p gitbackup scp "/srv/gitlab/data/backups/gitlab_backup.sh" gitbackup@192.168.0.150:/home/gitbackup/
+
+
+#############################################
+#############   gitlab-runner   #############
+#############################################
+注册
+gitlab-runner register
+gitlab-ci-multi-runner register
+运行
+gitlab-runner run
+gitlab-runner restart
+
+docker run -d --name gitlab-runner-java --restart always  -v /srv/gitlab-runner/config/java:/etc/gitlab-runner  -v /var/run/docker.sock:/var/run/docker.sock  gitlab/gitlab-runner:latest
+docker run -d --name gitlab-runner-npm --restart always  -v /srv/gitlab-runner/config/npm:/etc/gitlab-runner  -v /var/run/docker.sock:/var/run/docker.sock  gitlab/gitlab-runner:latest
+
+
+
+
+
+
+
+
+DEPLOY_SERVER    192.168.0.31
+SSH_PRIVATE_KEY
+-----BEGIN RSA PRIVATE KEY-----
+MIIEpQIBAAKCAQEA7DrCBgViSf7QhTCckTZgH/6RpVp1/b6rQKd0OCG9YsrdsNss
+g5YVaTRDkNVgiTojn4xG8D1qt8EIj+IW7vMEi9YMYCfEU+qVFFozQdJacyviIJSs
+4yj3Xy/TxrU6q3VzbR/HTlTn2xBXh5hByt4NxLe9JkutAkGSoKyq1OkIPeMoXzQo
+2tmAFr7+zH5OL9lmPD0eOgbDG1BFgAM3pIxDIgH/QCzCoIRzw4ynrdQPkeTxAZhr
+g2UwdSr7yiAN4ndM4kyyTIi6Mfxe3rXk4i+poG4o3ycf3nUw2IGBYD5URHKbp8e2
+frMIKVtyn2duWGza3VlHW+VWg1WBpFlgvV4h1wIDAQABAoIBAHlMopxc31+HjKMX
+lw2pkipbmYYCsVueMGl+ktrP2GOGL9fEc1MOGehvgdI4/tz4EZq3eSWbI9U/NZpM
+SeJgvxDe1HP7d4BvkCVnO7KsxO0mt3JrZWsvefZSpLgADyRDpwV9r+W1C2kdNxTV
+RdNZulAs2N91NF1YNmZywzWYgzbjFSQB00SSxtZ1P/dRZ5L7OvrOTE7beZQIsCoV
+QUgxpgOJr7pkuQrv/YpjfCwtLHc/uChM8HaiLHWalnKQ9MQeAeoGTmdXBmOnV80X
+RExrFCPGhjpbOvESdP6+l9ZxEHF0IgIZwgRv2vAte/OgBKTFI3I2C+5Ey6ZdhcUk
+GuhKZ8ECgYEA+E6QZSf+SxMzjGlaLhGROP2sfMD0V7OvERrd0cSaFUARXV1tNfR9
+WtAO7lgC2ZwBLwcJ/kItGkDbGbKObdSu7wnKmSEtwSJXM2PuSoD77KXGkoe0lB5O
+2EWpoFJ676YFUrXBeJXoh6FyIiQhnPs0ip1aFlkjcYSzTwJk36w1Wn8CgYEA84xn
+GCbOVw37Mcgvi3geI6TMCPvjZz1gev/9LO5REh9JjUETNBCmHcVxr1tn69T+kf3s
+9tP1ZJ8vsFTrH0zXUn7U++JQjZCui9CYyuLVtUJDtCfIzXHYVyormbCNVDqVqx+E
+hY2cd7TKhOcFu2s0LGjSQwW74qhzD+SM1PUAnKkCgYEA4dEJLoWllP8cZTi2g6kE
+SjEhOb99N3k44DRvwMKsYmEGqcM6e9QiYIFQ4t91kBN5XBxpsSrbu8F5wLALKcU/
+ZjKgZoyvALLLXPgnkOgms/u7UC1MQ1wg1jzcW+pG1UVGGAclsRWcCCUCGByF2S73
+hIw/jo14V1eYfmUt+eCyEN8CgYEArSnl30kwKrt5H9Mq4uo727H/lF+sNypvn+TF
+GR41LEJspG9hfQJdaguJolnGUOq3OgwmYPUhpDJ+0MwABNg4vKILQzCNf6ogQK7H
+BHI16tO7masz3ccVQBxuta7PPdUNt4cITYD7gC1eVRKBg9lcVjsNTLQV+7kzXlht
+PbkZf0kCgYEA8+fZOWh0g2E4cA8Nb30W25H6VfjAwauf3XqpsWLN070YC6S5QcaI
+IAPKANAgGq/ao7ymBvqF2Djfqtjbci3LVSO5cYnd72fx47lm+zFFGu0U9oAAJrxD
+vmO99phtQwOJSNmO46xPCqcIZSUE0aluNFEmfKroLBo8TGkdVMrCdPg=
+-----END RSA PRIVATE KEY-----

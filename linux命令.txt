@@ -1,0 +1,97 @@
+linux常用命令：
+
+#### 防火墙状态
+firewall-cmd --state
+iptables-save
+
+#### 打开防火墙端口  
+临时打开  /sbin/iptables -I INPUT -p tcp --dport 8080 -j ACCEPT
+长期打开  firewall-cmd --zone=public --add-port=2375/tcp --permanent
+          firewall-cmd --reload
+		  
+--查看端口占用
+netstat -tunlp |grep 端口号
+
+打包命令  tar zcvf  httpd.tar.gz  .
+解压命令  tar zxvf
+
+--java 后台执行
+nohup java -jar demo-provider-1.0-SNAPSHOT.jar >provider.log &
+
+centos7安装npm和nodejs
+
+https://github.com/kazuhisya/nodejs-rpm
+
+
+$ sudo curl -sL -o /etc/yum.repos.d/khara-nodejs.repo https://copr.fedoraproject.org/coprs/khara/nodejs/repo/epel-7/khara-nodejs-epel-7.repo
+$ sudo yum install -y nodejs nodejs-npm
+
+systemctl start postgresql-9.6并回车，启动服务。
+
+--拷贝文件夹
+cp -rf /opt/httpd /opt/bak/httpd
+
+--重启ssh
+systemctl restart sshd.service
+
+ rm -rf 文件夹的名字
+ 
+REDIS 操作
+redis-cli
+del SCORE_RULES_MAP
+ttl SCORE_RULES_MAP
+
+
+
+--解决shell文件字符问题
+sed -i "s/\r//" fileName
+
+--任务调度
+crontab -l  列出当前登录用户所有定时任务
+crontab -l -u XXX  列出XXX用户的所有定时任务，如有没有会提示 no crontab for XXX
+crontab -e  编辑当前用户的定时任务
+crontab -r  删除当前用户的定时任务
+ 
+查看crontab的执行情况：  tail -f /var/log/cron
+查看crontab的执行log：vim /var/spool/mail/root
+ 
+2.定时任务的时间设置
+* * * * *　              每分钟执行
+*/1 * * * *　          每分钟执行
+0 5 * * *                每天五点执行
+0-59/2 * * * *        每隔两分钟执行，且是偶数分钟执行，比如2,4,6
+1-58/2 * * * *        每隔两分钟执行，且是奇数分钟执行，比如3,5,7
+0 0 1,5,10 * *        每个月1号，5号，10号执行
+0 0 1-5 * *            每个月 1到5号执行
+
+
+关机命令：
+1、halt   立刻关机 2、poweroff  立刻关机 3、shutdown -h now 立刻关机(root用户使用) 
+4、shutdown -h 10 10分钟后自动关机 如果是通过shutdown命令设置关机的话，可以用shutdown -c命令取消重启 
+
+--磁盘空间命令
+查看目录大小  sudo du -sh *
+查看磁盘空间  df -h
+
+###############################################
+########修改linux的最大文件句柄数限制##########
+###############################################
+对于一般的应用来说(象Apache、系统进程)1024完全足够使用。但是如何象squid、mysql、java等单进程处理大量请求的应用来说就有点捉襟见肘了。如果单个进程打开的文件句柄数量超过了系统定义的值，就会提到“too many files open”的错误提示。如何知道当前进程打开了多少个文件句柄呢？下面一段小脚本可以帮你查看：
+lsof -n |awk '{print $2}'|sort|uniq -c |sort -nr|more
+修改linux的最大文件句柄数限制的方法：
+1）ulimit -n 65535 
+在当前session有效，用户退出或者系统重新后恢复默认值
+2）修改profile文件：在profile文件中添加：ulimit -n 65535
+只对当个用户有效
+3）修改文件：/etc/security/limits.conf，在文件中添加：（立即生效-当前session中运行ulimit -a命令无法显示）
+* soft nofile 32768 #限制单个进程最大文件句柄数（到达此限制时系统报警） 
+* hard nofile 65536 #限制单个进程最大文件句柄数（到达此限制时系统报错） 
+4）修改文件：/etc/sysctl.conf。在文件中添加：
+fs.file-max=655350 #限制整个系统最大文件句柄数 
+运行命令：/sbin/sysctl -p 使配置生效
+
+###############################################
+########      修改linux的静态IP      ##########
+###############################################
+网络配置的配置文件在vi /etc/sysconfig/network-scripts/ifcfg-ens33
+/etc/init.d/network restart

@@ -1,0 +1,84 @@
+####  docker 开启2375端口
+vim /usr/lib/systemd/system/docker.service
+ExecStart=/usr/bin/dockerd -H tcp://0.0.0.0:2375 -H unix://var/run/docker.sock
+systemctl daemon-reload // 1，加载docker守护线程
+systemctl restart docker // 2，重启docker
+
+--进入dockers容器
+docker exec -it 775c7c9ee1e1 /bin/bash
+--启动docker容器
+docker start <id>
+--查询docker容器
+docker ps -n 5
+--启动docker容器
+docker start container_id
+
+####  批量删除无tag的镜像 
+docker images|grep none|awk '{print $3}'|xargs docker rmi
+####  批量删除无用的卷
+docker volume prune
+
+####  启动docker swarm 
+docker swarm init --advertise-addr 192.168.0.250
+
+####  加入docker swarm
+docker swarm join --token ip:2377
+
+####  离开docker swarm
+docker swarm leave --force  --管理节点离开
+
+
+####  创建带有swarm的portainer
+docker service create \
+--name portainer \
+--publish 9000:9000 \
+--constraint 'node.role == manager' \
+--mount type=bind,src=//var/run/docker.sock,dst=/var/run/docker.sock \
+--mount type=volume,src=portainer_data,dst=/data \
+portainer/portainer \
+-H unix:///var/run/docker.sock
+
+docker run -d -p 9000:9000 --restart=always --name portainer -v /run/docker.sock:/var/run/docker.sock -v /home/portainer/data:/data  portainer/portainer
+
+#### 查看dockers日志
+docker logs -f zookeeper
+
+#### 创建redis容器
+docker run -p 6379:6379 -v $PWD/data:/data --restart always --name redis -d redis:latest redis-server --appendonly yes
+
+#### 创建zookeeper容器
+docker run -p 2181:2181 --name zookeeper --restart always -d zookeeper
+
+#### 创建java容器
+docker run -d -p 8082:8082 --link redis:redis --link zookeeper:zookeeper --name base-service imedical/base-service:latest
+docker run -d -p 8084:8084 --link redis:redis --link zookeeper:zookeeper --name hospital-service imedical/hospital-service:latest
+docker run -d -p 8098:8098 --link redis:redis --link zookeeper:zookeeper --name message-center imedical/message-center:latest
+docker run -d -p 8099:8099 --link redis:redis --link zookeeper:zookeeper --name job-center imedical/job-center:latest
+docker run -d -p 8086:8086 --link redis:redis --link zookeeper:zookeeper --name drugstore-service imedical/drugstore-service:latest
+
+#### 创建nginx容器
+docker run -d -p 80:80 -p 8000:8000 -p 8001:8001 --restart always --name nginx -v $PWD/www:/opt/www -v $PWD/conf/nginx.conf:/etc/nginx/nginx.conf -v $PWD/logs:/var/log/nginx nginx:latest
+
+#### 创建rabbitmq容器
+docker run -d -p 15672:15672 -p 5672:5672 -e RABBITMQ_DEFAULT_USER=admin -e RABBITMQ_DEFAULT_PASS=admin --name rabbitmq --hostname=rabbitmq_1 rabbitmq:management
+
+####  filebrowser
+docker run -d --restart always --name filebrowser -v /opt:/optz -v $PWD/sites/root:/srv -v $PWD/conf/config.json:/etc/config.json -v $PWD/db/database.db:/etc/database.db -p 5555:80 filebrowser/filebrowser
+####  drupal 
+docker run --name drupal8 --link mysql:mysql -p 7777:80 -d drupal:8.0.1
+####  verynginx 
+docker run -d -v $PWD/conf.d:/etc/nginx/conf.d -p 80:80 -p 443:443 camil/verynginx
+http://localhost/verynginx/index.html
+user: verynginx
+pass: verynginx
+
+####  caddy
+docker run -d -p 2015:2015 -v $PWD:/var/www/html --name caddy abiosoft/caddy
+
+docker run -d -v $PWD/Caddyfile:/etc/Caddyfile -v $PWD/.caddy:/root/.caddy -p 80:80 -p 443:443  --name caddy  abiosoft/caddy
+
+docker run -d \
+    -e "CADDYPATH=/etc/caddycerts" \
+    -v $PWD/.caddy:/etc/caddycerts \
+    -p 80:80 -p 443:443 \
+    abiosoft/caddy
