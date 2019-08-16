@@ -20,8 +20,12 @@ gitlab-ctl start
 # 远程备份
 #docker run -d --name sshpass --restart always -v /srv/gitlab/data/backups:/opt/backups ictu/sshpass:latest
 #docker run -v /srv/gitlab/data/backups:/opt/backups --rm -it sshpass -p gitbackup ssh -o StrictHostKeyChecking=no gitbackup@192.168.0.150:/home/gitbackup  scp /opt/backups/gitlab_backup.sh
-sshpass -o StrictHostKeyChecking=no -p gitbackup scp gitlab_backup.sh gitbackup@192.168.0.150:/home/gitbackup 
-sshpass -p gitbackup scp "/srv/gitlab/data/backups/gitlab_backup.sh" gitbackup@192.168.0.150:/home/gitbackup/
+
+docker run -it --rm -v /srv/gitlab/data/backups:/opt/backups -v /root/.ssh/:/root/.ssh migro78/rsync:latest rsync -rav --delete /opt/backups/ root@192.168.0.150:/opt/gitlab-backup/
+
+# 配置定时备份任务
+0 2 * * * /bin/bash /srv/gitlab/data/backups/gitlab_backup.sh > /dev/null 2>&1
+0 4 * * * /bin/bash /srv/gitlab/data/backups/gitlab_upload.sh > /dev/null 2>&1
 
 
 #############################################
@@ -39,9 +43,11 @@ docker run -d --name gitlab-runner-npm --restart always  -v /srv/gitlab-runner/c
 
 
 
+DEPLOY_SERVER    192.168.0.150
 
-
-
+-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEAuGQ7pZ9mKASulZYJOEKqo7CYlqe4ynYq7JOQC7rmK6fxnvFS1jbJB4/b6ptbVWoqJ3sHThYKXZdT+l9YqPvmUflZL1+ZRy1cA9y48S8rV6/4ngpBmK2nlx+aPON7dTdjFvof8fZHyLPovyc+AlgCw22PYPJqeZsjKRcHpyqOQtPCyf5TgTAXDRZxCcKE3lNq8DGf+RjspAH1Aj+D+2OfdZqgY302fHEDipU5Fz5RA6K/7D2kZnEU1g3J7HZT7Z6aYAim+rYuDgVQjEcO6dWzCS/XAg+Ek/hBWTUTPbLpZ0RnELlGg4V7aQQ3wbu2MSUR4jgOgNtQy7uZ5OANr5uJGwIDAQABAoIBAQCsHPtEFG5xijU/8WU3u5q14h/7+CBX80cLvo1lNZalR0UUvGM7CrZItbJr4Ym2R7uDUKY38ADK7Xb4rEkAquiIubvSqWRUePV7sWp7zjChz+K7+gzSq71UJa59iUTy27lFeEGbQ+wrXisxSjrqSyaBLmH39y8FxZZjQ1jkY6eYnaKJeZ2MyIgodTZGKtPwHICwd+jyEzPeKSwczcwwVvDxudiaELGgtfZuy9x7gTbhCEDdGT55OKMfrU/Yt5MWx1aeAeIwo5/ynS/oxmpRW8cmp6f+JRHS0XXSz0EMI1X9QFxL0hArwdx+cHK/tdLcfBbgoa0eVnJIijdTj9FO7zURAoGBAPVYTFXLtpkAD9oCFwYhHp+L3kntjCkPxAUfoXNDbo24RKaoosVWn5GlOTucGb6cE8ZRwOjyyEKEAkf+gUg79yxjB2C/1bNnQoyvSBui7Zj7DGYVtAasi+VVskX5dhb+swoGPc6h5hC1Q1mvwvpT33F6z9Zb/L4SiD/dvamYBAfpAoGBAMBmRAvm+QFN/WaxfaU4FHz/Rouj/anGFEWB5cKeyxGlDVEUqLO9Vi3xfF4AzMnvvc3Pyx7ZNWkGKuVbeRl6NhgDY5NhNw+ub2z9dNmKhEhUW11hfs7Ts/wUOqbAcC+upEfnCg38AP+G3e0hfaepqzQ48/LK5q5H32iESkXu1mpjAoGBAM52uu5sW0JQIgbVQWjgEDQ1cSAHbq7TXKLvJl+oPG24xtT1Dt1Ac1IOl6ZJTATytVVsUQn33XzUOFM7orIV/IB26auKZBzwZbmce/L93jKh+aIi23fOVn/s6PQn5S+esS5baEHuTnx6/a2I0mz0jhGiRyreCEgvskcEpGoGykWZAoGAcuPemHjpksTen9c3X1TYrzfFCZf43sugyUzjRc+LFdNI23UJtKNIdhDxIjU6FRAreF4wPhCY20lKjkGMVBFtgfNsH9L6jUut0BieEVWs3oA5Os8AaUN0BACUcYUSuPaBtUoa7/TfJ7eCiJrqLRedW4by7bYKAGJ83y24KICR218CgYB09iK9ve4XnRzr+H7+X4EBWgTuWBPpQZT0k/SNFQH/vaLANrzRelGy9qvMo5GV88yIFAVp3Mej0j5zmhHOU+SoqAdcoZjp/lIXlLCX/leiZHqQUUN3MY6YuQCEjcsOdQ9DE5yqpuQHg8Whvju5mYs9I5E3VvKOM75GNKQKTHYrMA==
+-----END RSA PRIVATE KEY-----
 
 
 DEPLOY_SERVER    192.168.0.31
