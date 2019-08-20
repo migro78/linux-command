@@ -21,12 +21,27 @@ gitlab-ctl start
 #docker run -d --name sshpass --restart always -v /srv/gitlab/data/backups:/opt/backups ictu/sshpass:latest
 #docker run -v /srv/gitlab/data/backups:/opt/backups --rm -it sshpass -p gitbackup ssh -o StrictHostKeyChecking=no gitbackup@192.168.0.150:/home/gitbackup  scp /opt/backups/gitlab_backup.sh
 
-docker run -it --rm -v /srv/gitlab/data/backups:/opt/backups -v /root/.ssh/:/root/.ssh migro78/rsync:latest rsync -rav --delete /opt/backups/ root@192.168.0.150:/opt/gitlab-backup/
+docker run -i --rm -v /srv/gitlab/data/backups:/opt/backups -v /root/.ssh/:/root/.ssh migro78/rsync:latest rsync -rav --delete /opt/backups/ root@192.168.0.150:/opt/gitlab-backup/
+
 
 # 配置定时备份任务
-0 2 * * * /bin/bash /srv/gitlab/data/backups/gitlab_backup.sh > /dev/null 2>&1
-0 4 * * * /bin/bash /srv/gitlab/data/backups/gitlab_upload.sh > /dev/null 2>&1
+0 2 * * * /bin/bash /srv/gitlab/data/backups/gitlab_backup.sh >> /srv/gitlab/data/backups/backup.log 2>&1
+0 4 * * * /bin/bash /srv/gitlab/data/backups/gitlab_upload.sh >> /srv/gitlab/data/backups/upload.log 2>&1
 
+# 邮件测试
+gitlab-rails console
+Notify.test_email('zyf@cq2win.com', '邮件标题', '邮件正文').deliver_now
+
+gitlab_rails['smtp_enable'] = true
+gitlab_rails['smtp_address'] = "smtp.163.com"
+gitlab_rails['smtp_port'] = 465
+gitlab_rails['smtp_user_name'] = "notice_cq2win@163.com"
+gitlab_rails['smtp_password'] = "cq2win"
+gitlab_rails['smtp_domain'] = "smtp.163.com"
+gitlab_rails['smtp_authentication'] = "login"
+gitlab_rails['smtp_enable_starttls_auto'] = true
+gitlab_rails['smtp_tls'] = true
+gitlab_rails['gitlab_email_from'] = 'notice_cq2win@163.com'
 
 #############################################
 #############   gitlab-runner   #############
