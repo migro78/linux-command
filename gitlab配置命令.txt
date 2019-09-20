@@ -3,16 +3,16 @@
 #############################################
 
 # 容器构建
-docker run --detach --hostname 192.168.0.30 -p 8443:443 -p 80:80 -p 8022:22 --name gitlab --restart always  -v /srv/gitlab/config:/etc/gitlab  -v /srv/gitlab/logs:/var/log/gitlab -v /srv/gitlab/data:/var/opt/gitlab   gitlab/gitlab-ce:11.11.3-ce.0
+docker run --detach --hostname 192.168.0.12 -p 8443:443 -p 80:80 -p 8022:22 --name gitlab --restart always  -v /srv/gitlab/config:/etc/gitlab  -v /srv/gitlab/logs:/var/log/gitlab -v /srv/gitlab/data:/var/opt/gitlab   gitlab/gitlab-ce:11.11.3-ce.0
 
 # 重构重启
 gitlab-ctl reconfigure   (会生成新的gitlab.yml)
 gitlab-ctl restart
 
 # 手动备份  
-gitlab-rake gitlab:backup:create
+docker exec gitlab gitlab-rake gitlab:backup:create
 
-# 备份回复
+# 备份恢复
 gitlab-ctl stop unicorn  &&  gitlab-ctl stop sidekiq
 gitlab-rake gitlab:backup:restore BACKUP=/var/opt/gitlab/backups/1557136073_2019_05_06_11.10.4
 gitlab-ctl start

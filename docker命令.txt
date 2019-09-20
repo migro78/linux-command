@@ -89,3 +89,9 @@ docker run -d \
     -v $PWD/.caddy:/etc/caddycerts \
     -p 80:80 -p 443:443 \
     abiosoft/caddy
+	
+####  nacos  ####
+docker run --env MODE=standalone --name nacos -d -p 8848:8848 -v /opt/nacos/conf:/home/nacos/conf nacos/nacos-server
+
+####  sentinel  ####
+docker run --name sentinel -d -p 8858:8858 -d bladex/sentinel-dashboard
