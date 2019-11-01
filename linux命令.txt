@@ -9,6 +9,17 @@ iptables-save
 长期打开  firewall-cmd --zone=public --add-port=2375/tcp --permanent
           firewall-cmd --reload
 		  
+####  在/etc/rc.d/rc.local中添加		  
+sleep 30 && iptables -P FORWARD ACCEPT
+		  
+#### centos7 安装 iptables-service
+yum install -y iptables-services
+systemctl start iptables
+systemctl enable iptables
+
+service iptables save
+iptables-restore < /etc/sysconfig/iptables
+		  
 --查看端口占用
 netstat -tunlp |grep 端口号
 
@@ -95,3 +106,11 @@ fs.file-max=655350 #限制整个系统最大文件句柄数
 ###############################################
 网络配置的配置文件在vi /etc/sysconfig/network-scripts/ifcfg-ens33
 /etc/init.d/network restart
+
+BOOTPROTO=static
+IPADDR=192.168.0.70
+NETMASK=255.255.255.0
+GATEWAY=192.168.0.1
+DNS1=61.128.128.68
+ONBOOT=yes
+ZONE=public

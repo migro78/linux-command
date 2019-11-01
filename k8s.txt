@@ -1,0 +1,44 @@
+####  安装前操作
+yum -y install epel-release
+systemctl stop firewalld
+systemctl disable firewalld
+setenforce 0
+
+####  安装k8s-master
+yum -y install etcd kubernetes-master
+vi /etc/etcd/etcd.conf
+vi /etc/kubernetes/apiserver
+for SERVICES in etcd kube-apiserver kube-controller-manager kube-scheduler; do systemctl restart $SERVICES;systemctl enable $SERVICES;systemctl status $SERVICES ; done
+etcdctl mk /atomic.io/network/config '{"Network":"172.17.0.0/16"}'
+
+
+####  安装k8s-node
+yum -y install flannel kubernetes-node
+vi /etc/sysconfig/flanneld
+vi /etc/kubernetes/config
+vi /etc/kubernetes/kubelet
+for SERVICES in kube-proxy kubelet docker flanneld;do systemctl restart $SERVICES;systemctl enable $SERVICES;systemctl status $SERVICES; done
+
+在/etc/rc.d/rc.local中添加	sleep 30 && iptables -P FORWARD ACCEPT
+
+
+#### 解决centos7问题： Error syncing pod, skipping: failed to "StartContainer" for "POD" with ErrImagePull: "image pull failed for registry.access.redhat.com/rhel7/pod-infrastructure:latest, this may be ####                    because there are no credentials on this request.  details: (open /etc/docker/certs.d/registry.access.redhat.com/redhat-ca.crt: no such file or directory)"
+
+yum -y install wget
+wget http://mirror.centos.org/centos/7/os/x86_64/Packages/python-rhsm-certificates-1.19.10-1.el7_4.x86_64.rpm
+rpm2cpio python-rhsm-certificates-1.19.10-1.el7_4.x86_64.rpm | cpio -iv --to-stdout ./etc/rhsm/ca/redhat-uep.pem | tee /etc/rhsm/ca/redhat-uep.pem
+docker pull registry.access.redhat.com/rhel7/pod-infrastructure:latest
+
+
+#####################################################
+############      命令     ##########################
+#####################################################
+kubectl get pods --all-namespaces -o wide
+kubectl describe pod kubernetes-dashboard-4208894522-716pd -n kube-system
+
+#######
+
+for SERVICES in kube-proxy kubelet docker flanneld;
+ do systemctl restart $SERVICES;
+ systemctl status $SERVICES; 
+done
