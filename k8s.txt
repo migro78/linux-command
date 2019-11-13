@@ -36,9 +36,89 @@ docker pull registry.access.redhat.com/rhel7/pod-infrastructure:latest
 kubectl get pods --all-namespaces -o wide
 kubectl describe pod kubernetes-dashboard-4208894522-716pd -n kube-system
 
-#######
+#### 调整应用副本数量
+kubectl scale deployments/myweb --replicas=1
+
+#### app镜像升级更新
+kubectl set image deployments/kubernetes-bootcamp kubernetes-bootcamp=jocatalin/kubernetes-bootcamp:v2
+
+#######  
 
 for SERVICES in kube-proxy kubelet docker flanneld;
  do systemctl restart $SERVICES;
  systemctl status $SERVICES; 
 done
+
+
+#####################################################
+############      通过adm安装k8s     ################
+#####################################################
+systemctl stop firewalld && systemctl disable firewalld 
+setenforce 0 && sed -i "s/SELINUX=enforcing/SELINUX=disabled/g" /etc/selinux/config 
+swapoff -a && sed -i "s/\/dev\/mapper\/centos-swap/\#\/dev\/mapper\/centos-swap/g" /etc/fstab 
+
+yum install -y wget
+wget -O /etc/yum.repos.d/CentOS7-Aliyun.repo http://mirrors.aliyun.com/repo/Centos-7.repo 
+
+
+vi /etc/hosts
+192.168.0.70   k8s-master
+192.168.0.71   k8s-node1
+192.168.0.72   k8s-node2
+
+echo "k8s-master" > /etc/hostname
+hostname k8s-master
+
+echo "k8s-node1" > /etc/hostname
+hostname k8s-node1
+
+echo "k8s-node2" > /etc/hostname
+hostname k8s-node2
+
+1.安装docker
+安装阿里云docker源： 
+wget -O /etc/yum.repos.d/docker-ce.repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+yum install -y docker-ce-18.06.3.ce
+
+systemctl enable docker && systemctl start docker
+
+echo '{"registry-mirrors":["https://registry.docker-cn.com"],"exec-opts": ["native.cgroupdriver=systemd"]}' > /etc/docker/daemon.json
+
+systemctl daemon-reload && systemctl restart docker
+
+2.安装k8s adm
+cat <<EOF > /etc/yum.repos.d/kubernetes.repo
+[kubernetes]
+name=Kubernetes
+baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64/
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg https://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg
+EOF
+
+yum install -y kubelet-1.14.1 kubeadm-1.14.1 kubectl-1.14.1
+
+systemctl enable kubelet && systemctl start kubelet
+
+3.配置 k8sadm master
+kubeadm init --kubernetes-version=v1.14.1 --pod-network-cidr=10.17.0.0/16 --ignore-preflight-errors=all
+
+mkdir -p $HOME/.kube
+cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+chown $(id -u):$(id -g) $HOME/.kube/config
+
+kubectl apply -f https://docs.projectcalico.org/v3.5/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
+
+
+4.配置 k8sadm slave
+
+kubeadm join 192.168.0.70:6443 --token v3o2m8.uqvveyu70140wsg8 \
+    --discovery-token-ca-cert-hash sha256:03264c87a65c76e292bc904b72d6fa1e057c0a0fdd8aba648ae04c2159ac2266  --ignore-preflight-errors=all
+
+
+#######
+
+kubectl get pod -n kube-system -owide 
+
+
