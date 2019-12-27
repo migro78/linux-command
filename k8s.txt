@@ -62,6 +62,7 @@ wget -O /etc/yum.repos.d/CentOS7-Aliyun.repo http://mirrors.aliyun.com/repo/Cent
 
 
 vi /etc/hosts
+
 192.168.0.70   k8s-master
 192.168.0.71   k8s-node1
 192.168.0.72   k8s-node2
@@ -108,7 +109,7 @@ mkdir -p $HOME/.kube
 cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 chown $(id -u):$(id -g) $HOME/.kube/config
 
-kubectl apply -f https://docs.projectcalico.org/v3.5/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
+kubectl apply -f calico.yaml
 
 
 4.配置 k8sadm slave
@@ -121,4 +122,6 @@ kubeadm join 192.168.0.70:6443 --token v3o2m8.uqvveyu70140wsg8 \
 
 kubectl get pod -n kube-system -owide 
 
+kubeadm join 192.168.0.70:6443 --token errl2n.67bydx6pmnaej1k6 \
+    --discovery-token-ca-cert-hash sha256:f44f1296d7903d67061c3521c022cecde0125ad5106820f1a93c634f54c5977e
 
