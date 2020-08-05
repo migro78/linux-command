@@ -42,7 +42,10 @@ docker service create \
 portainer/portainer \
 -H unix:///var/run/docker.sock
 
-docker run -d -p 9000:9000 --restart=always --name portainer -v /run/docker.sock:/var/run/docker.sock -v /home/portainer/data:/data  portainer/portainer
+docker run -d -p 9000:9000 --restart=always --name portainer -v /run/docker.sock:/var/run/docker.sock -v /home/portainer/data:/data  portainer/portainer:1.23.2
+
+####  filebrowser
+docker run -d --restart always --name filebrowser -v /opt:/optz -v $PWD/sites/root:/srv -v $PWD/conf/config.json:/etc/config.json -v $PWD/db/database.db:/etc/database.db -p 5555:80 filebrowser/filebrowser:v2.0.12
 
 #### 安装docker compose
 curl -L https://github.com/docker/compose/releases/download/1.21.2/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
@@ -84,8 +87,6 @@ docker run -d -p 80:80 -p 443:443 -p 8000:8000 -p 8001:8001 -p 8002:8002 -p 8003
 #### 创建rabbitmq容器
 docker run -d -p 15672:15672 -p 5672:5672 -e RABBITMQ_DEFAULT_USER=admin -e RABBITMQ_DEFAULT_PASS=admin --name rabbitmq --hostname=rabbitmq_1 rabbitmq:management
 
-####  filebrowser
-docker run -d --restart always --name filebrowser -v /opt:/optz -v $PWD/sites/root:/srv -v $PWD/conf/config.json:/etc/config.json -v $PWD/db/database.db:/etc/database.db -p 5555:80 filebrowser/filebrowser
 ####  drupal 
 docker run --name drupal8 --link mysql:mysql -p 7777:80 -d drupal:8.0.1
 ####  verynginx 
@@ -110,3 +111,23 @@ docker run --env MODE=standalone --name nacos -d -p 8848:8848 --link mysql:mysql
 
 ####  sentinel  ####
 docker run --name sentinel -d -p 8858:8858 -d bladex/sentinel-dashboard
+
+####  nexus3  ####
+docker run -d -p 18081:8081 --name nexus3 -v /home/docker/nexus3/data:/nexus-data sonatype/nexus3
+初始密码在data/admin.password文件中
+
+
+1. 登录阿里云Docker Registry
+$ sudo docker login --username=migro78@sina.com registry.cn-chengdu.aliyuncs.com
+用于登录的用户名为阿里云账号全名，密码为开通服务时设置的密码。
+
+您可以在访问凭证页面修改凭证密码。
+
+2. 从Registry中拉取镜像
+$ sudo docker pull registry.cn-chengdu.aliyuncs.com/migro78/special-disease:[镜像版本号]
+docker tag [ImageId] migro78/special-disease
+
+3. 将镜像推送到Registry
+$ sudo docker login --username=migro78@sina.com registry.cn-chengdu.aliyuncs.com
+$ sudo docker tag [ImageId] registry.cn-chengdu.aliyuncs.com/migro78/special-disease:[镜像版本号]
+$ sudo docker push registry.cn-chengdu.aliyuncs.com/migro78/special-disease:[镜像版本号]

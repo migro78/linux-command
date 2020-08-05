@@ -87,6 +87,15 @@ echo '{"registry-mirrors":["https://registry.docker-cn.com"],"exec-opts": ["nati
 
 systemctl daemon-reload && systemctl restart docker
 
+##########   镜像加速  #######################
+mkdir -p /etc/docker
+tee /etc/docker/daemon.json <<-'EOF'
+{
+  "registry-mirrors": ["https://gyxusb2j.mirror.aliyuncs.com"]
+}
+EOF
+systemctl daemon-reload && systemctl restart docker
+
 2.安装k8s adm
 cat <<EOF > /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
