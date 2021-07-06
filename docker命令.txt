@@ -16,6 +16,8 @@ docker start container_id
 #### 上传镜像到hut.docker.com
 docker login  
 docker push 注册用户名/镜像名  
+Error response from daemon: Get https://xxx.xxx.xxx.xxx:xxxx/v2/: http: server gave HTTP response to
+echo '{ "insecure-registries":["xxx.xxx.xxx.xxx:xxxx"] }' > /etc/docker/daemon.json
 
 ####  批量删除无tag的镜像 
 docker images|grep none|awk '{print $3}'|xargs docker rmi
@@ -42,7 +44,7 @@ docker service create \
 portainer/portainer \
 -H unix:///var/run/docker.sock
 
-docker run -d -p 9000:9000 --restart=always --name portainer -v /run/docker.sock:/var/run/docker.sock -v /home/portainer/data:/data  portainer/portainer:1.23.2
+docker run -d -p 9000:9000 --restart=always --name portainer -v /run/docker.sock:/var/run/docker.sock -v /home/portainer/data:/data  portainer/portainer
 
 ####  filebrowser
 docker run -d --restart always --name filebrowser -v /opt:/optz -v $PWD/sites/root:/srv -v $PWD/conf/config.json:/etc/config.json -v $PWD/db/database.db:/etc/database.db -p 5555:80 filebrowser/filebrowser:v2.0.12
@@ -115,6 +117,14 @@ docker run --name sentinel -d -p 8858:8858 -d bladex/sentinel-dashboard
 ####  nexus3  ####
 docker run -d -p 18081:8081 --name nexus3 -v /home/docker/nexus3/data:/nexus-data sonatype/nexus3
 初始密码在data/admin.password文件中
+
+nexus3创建docker镜像库
+1.创建镜像库
+2.创建角色，赋予带docker*的权限，角色赋予用户
+3.Realms添加 Docker Bearer Token Realm （某些版本需要该操作）
+4.客户端设置 vi /etc/docker/daemon.json ，添加: "insecure-registries": ["xxx.xxx.xxx.xxx:xxxx"]
+5.systemctl daemon-reload    systemctl restart docker 
+6.客户端登录 docker login xxx.xxx.xxx.xxx:xxxx
 
 
 1. 登录阿里云Docker Registry

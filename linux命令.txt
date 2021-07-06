@@ -6,9 +6,14 @@ iptables-save
 
 #### 打开防火墙端口  
 临时打开  /sbin/iptables -I INPUT -p tcp --dport 8080 -j ACCEPT
-长期打开  firewall-cmd --zone=public --add-port=2375/tcp --permanent
+长期打开  firewall-cmd --zone=public --add-port=2181/tcp --permanent
           firewall-cmd --reload
+
 		  
+防火墙流量转发  firewall-cmd --query-masquerade 查看状态
+				firewall-cmd --add-masquerade --permanent     ##永久开启IP地址转发
+				firewall-cmd --reload         ##重载防火墙规则，使之生效
+				
 ####  在/etc/rc.d/rc.local中添加		  
 sleep 30 && iptables -P FORWARD ACCEPT
 		  
